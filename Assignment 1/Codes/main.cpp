@@ -7,13 +7,13 @@ public:
   BMPImage(std::vector<unsigned char>* _buffer);
   void filter1();
   void filter2();
+  void filter3();
   void writeImage();
   int byteOffset;
 private:
   std::vector<unsigned char>* buffer;
   int imageWidth;
   int imageHeight;
-
   int fileSize;
 };
 BMPImage::BMPImage(std::vector<unsigned char>* _buffer){
@@ -62,6 +62,37 @@ unsigned char tempPixel3;
     }
   }
 }
+void BMPImage::filter3(){
+std::vector<std::vector<unsigned char>> buffer_temp(imageHeight, std::vector<unsigned char>(3*imageWidth, 0));
+unsigned char imageDimensionTemp;
+for(int i=0; i<imageHeight; i++){
+  for(int j=0; j<imageWidth; j++){
+    buffer_temp[i][3*j] = buffer->operator[](byteOffset + i*(3*imageWidth+(4-imageWidth%4)%4)+3*j);
+    buffer_temp[i][3*j+1] = buffer->operator[](byteOffset + i*(3*imageWidth+(4-imageWidth%4)%4)+3*j+1);
+    buffer_temp[i][3*j+2] = buffer->operator[](byteOffset + i*(3*imageWidth+(4-imageWidth%4)%4)+3*j+2);
+
+  }
+}
+for(int i=0; i<4; i++){
+  imageDimensionTemp = buffer->operator[](18+i);
+  buffer->operator[](18+i) = buffer->operator[](22+i);
+  buffer->operator[](22+i) = imageDimensionTemp;
+}
+for(int i=0; i<imageWidth; i++){
+  for(int j=0; j<imageHeight; j++){
+    buffer->operator[](byteOffset + i*(3*imageHeight+(4-imageHeight%4)%4)+3*j) = buffer_temp[j][3*i];
+    buffer->operator[](byteOffset + i*(3*imageHeight+(4-imageHeight%4)%4)+3*j+1) = buffer_temp[j][3*i+1];
+    buffer->operator[](byteOffset + i*(3*imageHeight+(4-imageHeight%4)%4)+3*j+2) = buffer_temp[j][3*i+2];
+  }
+  for(int k=0; k<((4-imageHeight%4)%4); k++){
+    buffer->operator[](byteOffset + (i+1)*(3*imageHeight+(4-imageHeight%4)%4)-k) = 0;
+  }
+}
+}
+
+
+
+
 void BMPImage::writeImage(){
   std::ofstream outFile("out.bmp");
   for (int i=0; i<fileSize; i++){
@@ -80,8 +111,11 @@ int main(int argc, char *argv[]){
     std::vector<unsigned char> buffer((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
     inFile.close();
     BMPImage bmp(&buffer);
-    bmp.filter1();
+    bmp.filter3();
     bmp.writeImage();
+    for(int i=0; i<100; i++){
+      std::cout << i << " : " << (unsigned int) buffer[i] << std::endl;
+    }
   }
   else{
     std::cout << "Image has not been find." << std::endl;
