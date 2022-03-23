@@ -2,6 +2,8 @@
 #include <vector>
 #include <fstream>
 #include <iterator>
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 class BMPImage{
 public:
   BMPImage(std::vector<unsigned char>* _buffer);
@@ -28,7 +30,7 @@ BMPImage::BMPImage(std::vector<unsigned char>* _buffer){
     byteOffset += (buffer->operator[](i+10)<<(i*8));
   }
 }
-void BMPImage::mirrorFilter(){
+void BMPImage::blackAndWhiteFilter(){
 unsigned int tempPixel1;
 unsigned int tempPixel2;
 unsigned int tempPixel3;
@@ -44,7 +46,7 @@ unsigned int tempPixel3;
     }
   }
 }
-void BMPImage::blackAndWhiteFilter(){
+void BMPImage::mirrorFilter(){
 unsigned char tempPixel1;
 unsigned char tempPixel2;
 unsigned char tempPixel3;
@@ -79,14 +81,17 @@ for(int i=0; i<4; i++){
 }
 for(int i=0; i<imageWidth; i++){
   for(int j=0; j<imageHeight; j++){
-    buffer->operator[](byteOffset + i*(3*imageHeight+(4-3*imageHeight%4)%4)+3*j) = buffer_temp[j][3*i];
-    buffer->operator[](byteOffset + i*(3*imageHeight+(4-3*imageHeight%4)%4)+3*j+1) = buffer_temp[j][3*i+1];
-    buffer->operator[](byteOffset + i*(3*imageHeight+(4-3*imageHeight%4)%4)+3*j+2) = buffer_temp[j][3*i+2];
+    buffer->operator[](byteOffset + i*(3*imageHeight+(4-3*imageHeight%4)%4)+3*j) = buffer_temp[j][3*(imageWidth-1)-3*i];
+    buffer->operator[](byteOffset + i*(3*imageHeight+(4-3*imageHeight%4)%4)+3*j+1) = buffer_temp[j][3*(imageWidth-1)-3*i+1];
+    buffer->operator[](byteOffset + i*(3*imageHeight+(4-3*imageHeight%4)%4)+3*j+2) = buffer_temp[j][3*(imageWidth-1)-3*i+2];
   }
   for(int k=0; k<((4-3*imageHeight%4)%4); k++){
     buffer->operator[](byteOffset + i*(3*imageHeight+(4-3*imageHeight%4)%4)+3*imageHeight+k) = 0;
   }
 }
+int temp_imageHeight = imageHeight;
+imageHeight = imageWidth;
+imageWidth = imageHeight;
 }
 
 
@@ -110,6 +115,7 @@ int main(int argc, char *argv[]){
     std::vector<unsigned char> buffer((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
     inFile.close();
     BMPImage bmp(&buffer);
+    // bmp.blackAndWhiteFilter();
     bmp.rotationFilter();
     bmp.writeImage();
   }
