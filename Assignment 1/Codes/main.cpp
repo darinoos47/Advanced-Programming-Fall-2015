@@ -112,6 +112,7 @@ int main(int argc, char *argv[]){
   }
   std::ifstream inFile(argv[1]);
   if(inFile){
+// Reference: https://stackoverflow.com/questions/27406789/confused-about-usage-of-stdistreambuf-iterator    
     std::vector<unsigned char> buffer((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
     inFile.close();
     BMPImage bmp(&buffer);
