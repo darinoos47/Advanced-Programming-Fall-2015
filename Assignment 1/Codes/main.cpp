@@ -1,3 +1,19 @@
+// Links to be read:
+// 1-https://courses.cs.vt.edu/~cs2604/fall00/binio.html
+// 2-https://www.gnu.org/software/libc/manual/html_node/Binary-Streams.html
+// 3-https://stackoverflow.com/questions/10748506/what-does-it-mean-to-bitwise-left-shift-an-unsigned-char-with-16
+// Add this method of reading from the files:
+// ifile.open(file.c_str(), std::ios::binary);
+// std::vector<uint32_t> datavec;
+//
+// if (ifile.is_open())
+// {
+//     ifile.seekg(0,ifile.end);
+//     int flen = ifile.tellg();
+//     ifile.seekg(0,ifile.beg);
+//     datavec.resize(flen/sizeof(uint32_t));
+//     ifile.read((char*)&datavec.front(), datavec.size()*sizeof(uint32_t));
+//     ifile.close();
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -25,6 +41,7 @@ BMPImage::BMPImage(std::vector<unsigned char>* _buffer){
   imageHeight = 0;
   byteOffset = 0;
   for(int i=0; i<4; i++){
+//** good reference: https://stackoverflow.com/questions/10748506/what-does-it-mean-to-bitwise-left-shift-an-unsigned-char-with-16
     imageWidth += (buffer->operator[](i+18)<<(i*8));
     imageHeight += (buffer->operator[](i+22)<<(i*8));
     byteOffset += (buffer->operator[](i+10)<<(i*8));
@@ -99,6 +116,8 @@ imageWidth = imageHeight;
 
 void BMPImage::writeImage(){
   std::ofstream outFile("out.bmp");
+//** Instead of for loop you can use write method.
+//** Reference on writeing in files using write method: https://www.cplusplus.com/reference/ostream/ostream/write/
   for (int i=0; i<fileSize; i++){
     outFile << (buffer->operator[](i));
     // outFile << (*buffer)[i];
@@ -112,17 +131,50 @@ int main(int argc, char *argv[]){
   }
   std::ifstream inFile(argv[1]);
   if(inFile){
-// Reference: https://stackoverflow.com/questions/27406789/confused-about-usage-of-stdistreambuf-iterator    
+// Reference: https://stackoverflow.com/questions/27406789/confused-about-usage-of-stdistreambuf-iterator
     std::vector<unsigned char> buffer((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
     inFile.close();
     BMPImage bmp(&buffer);
     // bmp.blackAndWhiteFilter();
-    bmp.rotationFilter();
+
+    try{
+      po::options_description desc{"Program Options"};
+      desc.add_options()
+        ("help,h", "Help Screen")
+        ("Filter_1", "Black and Whith Filter")
+        ("Filter_2", "Mirror Filter")
+        ("Filter_3", "Rotation Filter");
+      po::variables_map vm;
+      po::store(po::parse_command_line(argc, argv, desc), vm);
+      if (vm.count("help"))
+        std::cout << desc << std::endl;
+      if(vm.count("Filter_1")){
+        bmp.blackAndWhiteFilter();
+      }
+      if(vm.count("Filter_2")){
+        bmp.mirrorFilter();
+      }
+      if(vm.count("Filter_3")){
+        bmp.rotationFilter();
+      }
+    }catch (const po::error &ex){
+      std::cerr << ex.what() << '\n';
+    }
     bmp.writeImage();
   }
   else{
     std::cout << "Image has not been find." << std::endl;
     return 1;
   }
+
+
+
+
+
+
+
+
+
+
   return 0;
 }
